@@ -7,8 +7,12 @@ on:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+
     steps:
-      - name: Checkout Repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -16,11 +20,12 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
-          pip install requests wordpress-xmlrpc
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Run Generator
+      - name: Run post generator
         env:
           GITHUB_EVENT_PAYLOAD: ${{ toJson(github.event.client_payload) }}
         run: |

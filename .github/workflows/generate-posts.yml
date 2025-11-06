@@ -1,0 +1,30 @@
+name: Generate AdSense Posts
+
+on:
+  repository_dispatch:
+    types: [generate_adsense_posts]
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install requests wordpress-xmlrpc
+
+      - name: Run Generator
+        env:
+          SITE_URL: ${{ github.event.client_payload.site_url }}
+          ADMIN_EMAIL: ${{ github.event.client_payload.admin_email }}
+          WP_USER: admin
+          WP_PASS: your_strong_password_here
+        run: |
+          python generate_posts.py

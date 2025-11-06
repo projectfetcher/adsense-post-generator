@@ -22,9 +22,6 @@ jobs:
 
       - name: Run Generator
         env:
-          SITE_URL: ${{ github.event.client_payload.site_url }}
-          ADMIN_EMAIL: ${{ github.event.client_payload.admin_email }}
-          WP_USER: admin
-          WP_PASS: your_strong_password_here
+          GITHUB_EVENT_PAYLOAD: ${{ toJson(github.event.client_payload) }}
         run: |
           python generate_posts.py

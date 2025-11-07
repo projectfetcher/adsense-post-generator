@@ -4,16 +4,21 @@ on:
   workflow_dispatch:
     inputs:
       site_url:
+        description: 'Site URL'
         required: true
       wp_user:
+        description: 'WP Username'
         required: true
       wp_pass:
+        description: 'WP Password'
         required: true
       topics:
+        description: '15 Topics (comma-separated)'
         required: true
       site_description:
+        description: 'Site Description'
         required: false
-        default: "a general blog"
+        default: 'a general blog'
 
 jobs:
   generate:

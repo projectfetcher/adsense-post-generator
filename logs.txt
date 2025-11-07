@@ -1,0 +1,115 @@
+Starting AI post generation...
+AI Generation Started – Flan-T5-Large + MiniLM (CPU)
+Site: https://mauritius.mimusjobs.com
+Description: a general blog
+Topics (15): ['money making machine', 'chicken feed', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips']
+Loading google/flan-t5-large ...
+Flan-T5-Large loaded on CPU
+Loading all-MiniLM-L6-v2 for similarity...
+SentenceTransformer loaded
+Starting generation loop...
+Generating: money making machine
+Done: money making machine (32 words)
+Generating: chicken feed
+Done: chicken feed (141 words)
+Similarity to previous: 0.192
+Generating: General Tips
+Done: General Tips (188 words)
+Similarity to previous: 0.007
+Generating: General Tips
+Done: General Tips (48 words)
+Similarity to previous: 0.292
+Generating: General Tips
+Done: General Tips (266 words)
+Similarity to previous: 0.529
+Generating: General Tips
+Done: General Tips (165 words)
+Similarity to previous: 0.428
+Generating: General Tips
+Done: General Tips (340 words)
+Similarity to previous: 0.427
+Generating: General Tips
+Done: General Tips (113 words)
+Similarity to previous: 0.193
+Generating: General Tips
+Done: General Tips (64 words)
+Similarity to previous: 0.116
+Generating: General Tips
+Done: General Tips (201 words)
+Similarity to previous: 0.045
+Generating: General Tips
+Done: General Tips (39 words)
+Similarity to previous: 0.291
+Generating: General Tips
+Done: General Tips (112 words)
+Similarity to previous: 0.310
+Generating: General Tips
+Done: General Tips (48 words)
+Similarity to previous: 0.281
+Generating: General Tips
+Done: General Tips (42 words)
+Similarity to previous: 0.422
+Generating: General Tips
+Done: General Tips (0 words)
+Similarity to previous: -0.022
+articles.json saved
+progress.json set to 100%
+All 15 AI posts generated!
+AI Generation Started – Flan-T5-Large + MiniLM (CPU)
+Site: https://mauritius.mimusjobs.com
+Description: a general blog
+Topics (15): ['money making machine', 'chicken feed', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips']
+Loading google/flan-t5-large ...
+Flan-T5-Large loaded on CPU
+Loading all-MiniLM-L6-v2 for similarity...
+SentenceTransformer loaded
+Starting generation loop...
+Generating: money making machine
+Done: money making machine (32 words)
+Generating: chicken feed
+Done: chicken feed (141 words)
+Similarity to previous: 0.192
+Generating: General Tips
+Done: General Tips (188 words)
+Similarity to previous: 0.007
+Generating: General Tips
+Done: General Tips (48 words)
+Similarity to previous: 0.292
+Generating: General Tips
+Done: General Tips (266 words)
+Similarity to previous: 0.529
+Generating: General Tips
+Done: General Tips (165 words)
+Similarity to previous: 0.428
+Generating: General Tips
+Done: General Tips (340 words)
+Similarity to previous: 0.427
+Generating: General Tips
+Done: General Tips (113 words)
+Similarity to previous: 0.193
+Generating: General Tips
+Done: General Tips (64 words)
+Similarity to previous: 0.116
+Generating: General Tips
+Done: General Tips (201 words)
+Similarity to previous: 0.045
+Generating: General Tips
+Done: General Tips (39 words)
+Similarity to previous: 0.291
+Generating: General Tips
+Done: General Tips (112 words)
+Similarity to previous: 0.310
+Generating: General Tips
+Done: General Tips (48 words)
+Similarity to previous: 0.281
+Generating: General Tips
+Done: General Tips (42 words)
+Similarity to previous: 0.422
+Generating: General Tips
+Done: General Tips (0 words)
+Similarity to previous: -0.022
+articles.json saved
+progress.json set to 100%
+All 15 AI posts generated!
+SUCCESS
+Generation complete.

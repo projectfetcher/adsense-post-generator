@@ -1,55 +1,58 @@
-import random
-import xmlrpc.client
-from wordpress_xmlrpc import Client, WordPressPost
-from wordpress_xmlrpc.methods.posts import NewPost
 import os
 import json
+from wordpress_xmlrpc import Client, WordPressPost
+from wordpress_xmlrpc.methods.posts import NewPost
+from transformers import T5Tokenizer, T5ForConditionalGeneration
+import torch
 
-# Get from GitHub event payload
+# Load payload
 payload = json.loads(os.getenv('GITHUB_EVENT_PAYLOAD', '{}'))
-site_url = payload.get('site_url', os.getenv('SITE_URL', ''))
-wp_user = payload.get('wp_user', os.getenv('WP_USER', 'admin'))
-wp_pass = payload.get('wp_pass', os.getenv('WP_PASS', ''))
+site_url = payload.get('site_url', '').rstrip('/')
+wp_user = payload.get('wp_user', '')
+wp_pass = payload.get('wp_pass', '')
+topics_input = payload.get('topics', '')
 
-if not site_url or not wp_user or not wp_pass:
-    print("Missing credentials")
+if not all([site_url, wp_user, wp_pass, topics_input]):
+    print("Missing data")
     exit(1)
 
-url = site_url.rstrip('/') + '/xmlrpc.php'
-client = Client(url, wp_user, wp_pass)
+# Parse topics
+topics = [t.strip() for t in topics_input.split(',') if t.strip()][:15]
+if len(topics) < 15:
+    topics.extend(["General Blogging Tips"] * (15 - len(topics)))
 
-titles = [
-    "Top 10 Job Interview Tips for Fresh Graduates",
-    "How to Write a Winning CV in 2025",
-    "Remote Work Trends in Mauritius",
-    "Best IT Jobs in Mauritius Right Now",
-    "How to Start Freelancing from Home",
-    "Salary Guide: What Jobs Pay in Mauritius",
-    "Career Change at 30: Is It Too Late?",
-    "How to Network Like a Pro in Mauritius",
-    "Top 5 In-Demand Skills for 2025",
-    "How to Get Promoted in 6 Months",
-    "Building a Personal Brand Online",
-    "Negotiating Salary in Mauritius",
-    "Best Career Paths for 2025",
-    "Overcoming Job Search Burnout",
-    "Essential Soft Skills for Success"
-]
+# Load AI model
+print("Loading google/flan-t5-large (CPU)...")
+device = torch.device("cpu")
+tokenizer = T5Tokenizer.from_pretrained("google/flan-t5-large")
+model = T5ForConditionalGeneration.from_pretrained("google/flan-t5-large").to(device)
+model.eval()
 
-def generate_paragraphs(n=5):
-    words = ["career", "job", "skills", "interview", "resume", "Mauritius", "work", "salary", "opportunity", "growth", "success", "professional", "experience", "employer", "candidate", "development", "networking", "training", "advancement", "balance"]
-    para = ""
-    for _ in range(n):
-        para += " ".join(random.choices(words, k=80)) + ". "
-    return para.strip()
+def generate_article(title):
+    prompt = f"Write a detailed blog post (400-600 words) about: {title}. Include intro, 3-5 tips, examples, and conclusion. Natural tone."
+    inputs = tokenizer(prompt, return_tensors="pt", max_length=512, truncation=True).to(device)
+    outputs = model.generate(
+        **inputs,
+        max_length=600,
+        num_beams=5,
+        temperature=0.7,
+        do_sample=True,
+        no_repeat_ngram_size=2
+    )
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-for i, title in enumerate(titles):
+# Connect & publish
+wp = Client(f"{site_url}/xmlrpc.php", wp_user, wp_pass)
+
+for i, title in enumerate(topics, 1):
+    print(f"Generating {i}/15: {title}")
+    content = generate_article(title)
     post = WordPressPost()
     post.title = title
-    post.content = f"<h2>{title}</h2><p>{generate_paragraphs(6)}</p><p>This post provides valuable insights for job seekers in Mauritius. Stay tuned for more career advice!</p>"
-    post.terms_names = {'category': ['Jobs', 'Career']}
+    post.content = f"<h2>{title}</h2><p>{content}</p>"
+    post.terms_names = {'category': ['Blog', 'Tips']}
     post.post_status = 'publish'
-    client.call(NewPost(post))
-    print(f"Created: {title} ({len(post.content.split())} words)")
+    wp.call(NewPost(post))
+    print(f"Published: {title}")
 
-print("All 15 posts generated successfully!")
+print("All 15 AI posts published!")

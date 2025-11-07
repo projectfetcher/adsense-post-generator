@@ -4,99 +4,114 @@ import json
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-# ---- LOGGING ----
+# ---- LOGGING (FIXED: Open file once, reuse handle) ----
 log_file = "logs.txt"
+log_handle = open(log_file, "a", encoding="utf-8")
+
 def log(msg):
     print(msg)
-    with open(log_file, "a", encoding="utf-8") as f:
-        f.write(msg + "\n")
-    f.flush()  # Ensure immediate write for live logs
+    log_handle.write(msg + "\n")
+    log_handle.flush()  # Live update in GitHub logs
 
 log("AI Generation Started - Fixed for CPU in GitHub Actions")
 
 # ---- PAYLOAD ----
-payload = {
-    "site_url": os.getenv("SITE_URL", ""),
-    "wp_user": os.getenv("WP_USER", ""),
-    "wp_pass": os.getenv("WP_PASS", ""),
-    "topics": os.getenv("TOPICS", ""),
-    "site_description": os.getenv("SITE_DESC", "a general blog")
-}
-log(f"Payload: site={payload['site_url']}, topics={payload['topics']}")
+site_url = os.getenv("SITE_URL", "")
+topics_str = os.getenv("TOPICS", "")
+site_desc = os.getenv("SITE_DESC", "a general blog")
 
-topics = [t.strip() for t in payload["topics"].split(",") if t.strip()][:15]
+topics = [t.strip() for t in topics_str.split(",") if t.strip()][:15]
 if len(topics) < 15:
     topics += ["General Tips"] * (15 - len(topics))
 
-log(f"Final topics: {topics}")
+log(f"Site: {site_url}")
+log(f"Topics: {topics}")
+log(f"Site Description: {site_desc}")
 
-# ---- MODEL (Fixed for CPU: float32 + no device_map) ----
-log("Loading Mistral-7B-Instruct-v0.3 (CPU-safe mode)...")
+# ---- MODEL (CPU-safe: float32 + no device_map) ----
+log("Loading Mistral-7B-Instruct-v0.3 (CPU mode)...")
 model_name = "mistralai/Mistral-7B-Instruct-v0.3"
+
 try:
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    # FIXED: Use float32 for CPU (avoids dtype/sharding error)
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        torch_dtype=torch.float32,  # Safe for CPU – no float16 conflicts
-        device_map=None,  # No sharding on CPU
-        low_cpu_mem_usage=True,  # Reduce memory
+        torch_dtype=torch.float32,      # CPU-safe
+        device_map=None,                # No sharding
+        low_cpu_mem_usage=True,
         trust_remote_code=True
     )
     model.eval()
     log("Model loaded successfully (float32 on CPU)")
 except Exception as e:
-    log(f"Model load error: {e}")
-    # Fallback to smaller model if Mistral fails
-    model_name = "microsoft/DialoGPT-medium"  # Lightweight fallback
+    log(f"Model load failed: {e}")
+    log("Falling back to smaller model...")
+    model_name = "google/flan-t5-small"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(model_name)
-    log(f"Fallback to {model_name}")
+    log(f"Fallback model loaded: {model_name}")
 
 def generate_article(title):
-    log(f"  → Generating: {title}")
-    prompt = f"<s>[INST] Write a detailed blog post (400-600 words) about '{title}' for {payload['site_description']}. Include intro, 3-5 tips, examples, and conclusion. Natural, engaging tone. [/INST]"
+    log(f"Generating: {title}")
+    prompt = f"<s>[INST] Write a detailed blog post (400-600 words) about '{title}' for {site_desc}. Include intro, 3-5 tips, examples, and conclusion. Natural tone. [/INST]"
     inputs = tokenizer(prompt, return_tensors="pt")
-    with torch.no_grad():  # Save memory
+    with torch.no_grad():
         outputs = model.generate(
             **inputs,
             max_new_tokens=600,
             temperature=0.7,
             do_sample=True,
             pad_token_id=tokenizer.eos_token_id,
-            repetition_penalty=1.1  # Avoid repetition
+            repetition_penalty=1.1
         )
-    text = tokenizer.decode(outputs[0], skip_special_tokens=True).split("[/INST]")[-1].strip()
+    text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    # Clean up response
+    if "[/INST]" in text:
+        text = text.split("[/INST]")[-1].strip()
     word_count = len(text.split())
-    log(f"  ← Done: {title} ({word_count} words)")
+    log(f"Done: {title} ({word_count} words)")
     return text
 
 # ---- GENERATE ----
 articles = []
 progress = {"total": len(topics), "done": 0, "current": "", "percent": 0}
 
-log("Starting article generation loop...")
+log("Starting generation loop...")
+
 for i, title in enumerate(topics, 1):
     progress["current"] = title
     progress["done"] = i - 1
     progress["percent"] = int((i - 1) / len(topics) * 100)
-    with open("progress.json", "w") as f:
-        json.dump(progress, f)
-    log(f"Progress updated: {progress['percent']}%")
+    
+    # Save progress
+    with open("progress.json", "w", encoding="utf-8") as f:
+        json.dump(progress, f, ensure_ascii=False)
+    log(f"Progress: {progress['percent']}%")
 
+    # Generate article
     content = generate_article(title)
     articles.append({"title": title, "content": content})
 
+    # Update progress
     progress["done"] = i
     progress["percent"] = int(i / len(topics) * 100)
-    with open("progress.json", "w") as f:
-        json.dump(progress, f)
+    with open("progress.json", "w", encoding="utf-8") as f:
+        json.dump(progress, f, ensure_ascii=False)
 
-log("All articles generated!")
-
-# ---- SAVE ----
-with open("articles.json", "w", encoding="utf-3") as f:
+# ---- SAVE FINAL FILES ----
+# Save articles
+with open("articles.json", "w", encoding="utf-8") as f:
     json.dump(articles, f, indent=2, ensure_ascii=False)
-log("Files saved: progress.json, articles.json, logs.txt")
+log("articles.json saved")
 
+# Final progress
+progress["percent"] = 100
+with open("progress.json", "w", encoding="utf-8") as f:
+    json.dump(progress, f, ensure_ascii=False)
+log("progress.json updated to 100%")
+
+log("All 15 AI posts generated!")
+
+# Close log file
+log_handle.close()
 print("SUCCESS: Generation complete.")

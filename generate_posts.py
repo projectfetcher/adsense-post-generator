@@ -3,14 +3,10 @@ import os
 import json
 import torch
 from transformers import T5Tokenizer, T5ForConditionalGeneration
-from wordpress_xmlrpc import Client, WordPressPost
-from wordpress_xmlrpc.methods.posts import NewPost
 
 # Load payload
 payload = json.loads(os.getenv("GITHUB_EVENT_PAYLOAD", "{}"))
 site_url = payload.get("site_url", "").rstrip("/")
-wp_user = payload.get("wp_user", "")
-wp_pass = payload.get("wp_pass", "")
 topics = [t.strip() for t in payload.get("topics", "").split(",") if t.strip()][:15]
 
 if len(topics) < 15:
@@ -35,7 +31,6 @@ def generate_article(title):
     print(f"  ← {len(text.split())} words")
     return text
 
-wp = Client(f"{site_url}/xmlrpc.php", wp_user, wp_pass)
 articles = []
 progress = {"total": len(topics), "done": 0, "current": "", "percent": 0}
 

@@ -20,13 +20,13 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install deps
+      - name: Install dependencies 
         run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip
+          pip install sentencepiece protobuf  # Core deps first
+          pip install -r requirements.txt    # Then transformers + others
 
       - name: Generate AI Posts
-        id: generate
         env:
           GITHUB_EVENT_PAYLOAD: ${{ toJson(github.event.client_payload) }}
         run: |

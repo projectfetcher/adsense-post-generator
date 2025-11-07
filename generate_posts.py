@@ -2,42 +2,57 @@
 import os
 import json
 import torch
-from transformers import T5Tokenizer, T5ForConditionalGeneration
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
-# === LOGGING SETUP ===
+# === LOGGING ===
 log_file = "logs.txt"
 with open(log_file, "w") as f:
-    f.write("AI Generation Started\n")
+    f.write("AI Generation Started - Using Mistral-7B-Instruct\n")
 
 def log(msg):
     print(msg)
     with open(log_file, "a") as f:
-        f.write(msg + "\n")
+        f.write(f"{msg}\n")
+    # Flush to make visible immediately
+    f.flush()
 
 # === PAYLOAD ===
 payload = json.loads(os.getenv("GITHUB_EVENT_PAYLOAD", "{}"))
 site_url = payload.get("site_url", "").rstrip("/")
+wp_user = payload.get("wp_user", "")
+wp_pass = payload.get("wp_pass", "")
 topics = [t.strip() for t in payload.get("topics", "").split(",") if t.strip()][:15]
+site_description = payload.get("site_description", "a general blog")
+
 if len(topics) < 15:
     topics += ["General Tips"] * (15 - len(topics))
 
-log(f"Generating {len(topics)} posts for {site_url}")
+log(f"Site: {site_url}")
+log(f"Description: {site_description}")
+log(f"Topics: {topics}")
 
-# === MODEL ===
-log("Loading google/flan-t5-large...")
-device = torch.device("cpu")
-tokenizer = T5Tokenizer.from_pretrained("google/flan-t5-large", legacy=False)
-model = T5ForConditionalGeneration.from_pretrained("google/flan-t5-large").to(device)
+# === MODEL (Mistral-7B – powerful for articles) ===
+log("Loading Mistral-7B-Instruct-v0.3 (CPU)...")
+model_name = "mistralai/Mistral-7B-Instruct-v0.3"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map="cpu")
 model.eval()
 log("Model loaded")
 
 def generate_article(title):
     log(f"Generating: {title}")
-    prompt = f"Write a detailed blog post (400-600 words) about: {title}. Include intro, tips, examples, conclusion."
-    inputs = tokenizer(prompt, return_tensors="pt", max_length=512, truncation=True).to(device)
-    outputs = model.generate(**inputs, max_length=600, num_beams=5, temperature=0.7, do_sample=True, no_repeat_ngram_size=2)
-    text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    log(f"Done: {title} ({len(text.split())} words)")
+    prompt = f"<s>[INST] Write a detailed blog post (400-600 words) about '{title}' for {site_description}. Include intro, 3-5 tips, examples, and conclusion. Natural tone. [/INST]"
+    inputs = tokenizer(prompt, return_tensors="pt").to("cpu")
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=600,
+        temperature=0.7,
+        do_sample=True,
+        pad_token_id=tokenizer.eos_token_id
+    )
+    text = tokenizer.decode(outputs[0], skip_special_tokens=True).split("[/INST]")[-1].strip()
+    word_count = len(text.split())
+    log(f"Done: {title} ({word_count} words)")
     return text
 
 # === GENERATE ===

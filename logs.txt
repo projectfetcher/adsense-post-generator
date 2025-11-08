@@ -7,7 +7,7 @@ Loading all-MiniLM-L6-v2 for title uniqueness...
 SentenceTransformer loaded
 Generating 15 unique blog titles for: Mauritius.mimusjobs.com: Your gateway to top jobs in Mauritius. Explore vacancies in tourism, finance, IT, and more from leading employers. Post resumes, apply easily, and advance your career on the island.
 Raw title output:
-Mauritius.mimusjobs.com  Mauritius: Job hunting in Mauritius
+Mauritius Jobs: New Hires in Mauritius | Mauritius Jobs, Mauritius Accommodation, Jobs, Accommodation | Mauritius Jobs, Mauritius Hotels
 Final 0 Unique Titles:
 
 Starting article generation loop...
@@ -22,7 +22,7 @@ Loading all-MiniLM-L6-v2 for title uniqueness...
 SentenceTransformer loaded
 Generating 15 unique blog titles for: Mauritius.mimusjobs.com: Your gateway to top jobs in Mauritius. Explore vacancies in tourism, finance, IT, and more from leading employers. Post resumes, apply easily, and advance your career on the island.
 Raw title output:
-Mauritius.mimusjobs.com  Mauritius: Job hunting in Mauritius
+Mauritius Jobs: New Hires in Mauritius | Mauritius Jobs, Mauritius Accommodation, Jobs, Accommodation | Mauritius Jobs, Mauritius Hotels
 Final 0 Unique Titles:
 
 Starting article generation loop...

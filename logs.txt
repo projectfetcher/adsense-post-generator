@@ -1,113 +1,113 @@
 Starting AI post generation...
 AI Generation Started – Flan-T5-Large + MiniLM (CPU)
-Site: https://mauritius.mimusjobs.com
+Site: 
 Description: a general blog
-Topics (15): ['money making machine', 'chicken feed', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips']
+Topics (15): ['General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips']
 Loading google/flan-t5-large ...
 Flan-T5-Large loaded on CPU
 Loading all-MiniLM-L6-v2 for similarity...
 SentenceTransformer loaded
 Starting generation loop...
-Generating: money making machine
-Done: money making machine (32 words)
-Generating: chicken feed
-Done: chicken feed (141 words)
-Similarity to previous: 0.192
 Generating: General Tips
-Done: General Tips (188 words)
-Similarity to previous: 0.007
+Done: General Tips (57 words)
 Generating: General Tips
-Done: General Tips (48 words)
-Similarity to previous: 0.292
+Done: General Tips (210 words)
+Similarity to previous: 0.250
 Generating: General Tips
-Done: General Tips (266 words)
-Similarity to previous: 0.529
+Done: General Tips (70 words)
+Similarity to previous: 0.169
 Generating: General Tips
-Done: General Tips (165 words)
-Similarity to previous: 0.428
+Done: General Tips (374 words)
+Similarity to previous: 0.157
 Generating: General Tips
-Done: General Tips (340 words)
-Similarity to previous: 0.427
+Done: General Tips (161 words)
+Similarity to previous: 0.337
 Generating: General Tips
-Done: General Tips (113 words)
-Similarity to previous: 0.193
+Done: General Tips (312 words)
+Similarity to previous: 0.380
 Generating: General Tips
-Done: General Tips (64 words)
-Similarity to previous: 0.116
+Done: General Tips (174 words)
+Similarity to previous: 0.360
 Generating: General Tips
-Done: General Tips (201 words)
-Similarity to previous: 0.045
+Done: General Tips (9 words)
+Similarity to previous: 0.424
 Generating: General Tips
-Done: General Tips (39 words)
-Similarity to previous: 0.291
+Done: General Tips (36 words)
+Similarity to previous: 0.305
 Generating: General Tips
-Done: General Tips (112 words)
-Similarity to previous: 0.310
+Done: General Tips (121 words)
+Similarity to previous: 0.237
 Generating: General Tips
-Done: General Tips (48 words)
-Similarity to previous: 0.281
+Done: General Tips (211 words)
+Similarity to previous: 0.490
 Generating: General Tips
-Done: General Tips (42 words)
-Similarity to previous: 0.422
+Done: General Tips (72 words)
+Similarity to previous: 0.361
 Generating: General Tips
-Done: General Tips (0 words)
-Similarity to previous: -0.022
+Done: General Tips (38 words)
+Similarity to previous: 0.315
+Generating: General Tips
+Done: General Tips (74 words)
+Similarity to previous: 0.185
+Generating: General Tips
+Done: General Tips (153 words)
+Similarity to previous: 0.420
 articles.json saved
 progress.json set to 100%
 All 15 AI posts generated!
 AI Generation Started – Flan-T5-Large + MiniLM (CPU)
-Site: https://mauritius.mimusjobs.com
+Site: 
 Description: a general blog
-Topics (15): ['money making machine', 'chicken feed', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips']
+Topics (15): ['General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips']
 Loading google/flan-t5-large ...
 Flan-T5-Large loaded on CPU
 Loading all-MiniLM-L6-v2 for similarity...
 SentenceTransformer loaded
 Starting generation loop...
-Generating: money making machine
-Done: money making machine (32 words)
-Generating: chicken feed
-Done: chicken feed (141 words)
-Similarity to previous: 0.192
 Generating: General Tips
-Done: General Tips (188 words)
-Similarity to previous: 0.007
+Done: General Tips (57 words)
 Generating: General Tips
-Done: General Tips (48 words)
-Similarity to previous: 0.292
+Done: General Tips (210 words)
+Similarity to previous: 0.250
 Generating: General Tips
-Done: General Tips (266 words)
-Similarity to previous: 0.529
+Done: General Tips (70 words)
+Similarity to previous: 0.169
 Generating: General Tips
-Done: General Tips (165 words)
-Similarity to previous: 0.428
+Done: General Tips (374 words)
+Similarity to previous: 0.157
 Generating: General Tips
-Done: General Tips (340 words)
-Similarity to previous: 0.427
+Done: General Tips (161 words)
+Similarity to previous: 0.337
 Generating: General Tips
-Done: General Tips (113 words)
-Similarity to previous: 0.193
+Done: General Tips (312 words)
+Similarity to previous: 0.380
 Generating: General Tips
-Done: General Tips (64 words)
-Similarity to previous: 0.116
+Done: General Tips (174 words)
+Similarity to previous: 0.360
 Generating: General Tips
-Done: General Tips (201 words)
-Similarity to previous: 0.045
+Done: General Tips (9 words)
+Similarity to previous: 0.424
 Generating: General Tips
-Done: General Tips (39 words)
-Similarity to previous: 0.291
+Done: General Tips (36 words)
+Similarity to previous: 0.305
 Generating: General Tips
-Done: General Tips (112 words)
-Similarity to previous: 0.310
+Done: General Tips (121 words)
+Similarity to previous: 0.237
 Generating: General Tips
-Done: General Tips (48 words)
-Similarity to previous: 0.281
+Done: General Tips (211 words)
+Similarity to previous: 0.490
 Generating: General Tips
-Done: General Tips (42 words)
-Similarity to previous: 0.422
+Done: General Tips (72 words)
+Similarity to previous: 0.361
 Generating: General Tips
-Done: General Tips (0 words)
-Similarity to previous: -0.022
+Done: General Tips (38 words)
+Similarity to previous: 0.315
+Generating: General Tips
+Done: General Tips (74 words)
+Similarity to previous: 0.185
+Generating: General Tips
+Done: General Tips (153 words)
+Similarity to previous: 0.420
 articles.json saved
 progress.json set to 100%
 All 15 AI posts generated!

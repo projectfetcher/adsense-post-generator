@@ -7,8 +7,13 @@ Loading all-MiniLM-L6-v2 for title uniqueness...
 SentenceTransformer loaded
 Generating 15 unique blog titles for: Mauritius.mimusjobs.com: Your gateway to top jobs in Mauritius. Explore vacancies in tourism, finance, IT, and more from leading employers. Post resumes, apply easily, and advance your career on the island.
 Raw title output:
-How to find jobs in Mauritius: the fastest, best and most attractive way
-ERROR: only one element tensors can be converted to Python scalars
+Mauritius.mimusjobs.com  Mauritius: Job hunting in Mauritius
+Final 0 Unique Titles:
+
+Starting article generation loop...
+articles.json saved with 0 articles
+progress.json set to 100%
+All articles generated successfully!
 AI Blog Generator Started – Flan-T5-Large + MiniLM (CPU)
 Site Description (hardcoded): Mauritius.mimusjobs.com: Your gateway to top jobs in Mauritius. Explore vacancies in tourism, finance, IT, and more from leading employers. Post resumes, apply easily, and advance your career on the island.
 Loading google/flan-t5-large ...
@@ -17,7 +22,12 @@ Loading all-MiniLM-L6-v2 for title uniqueness...
 SentenceTransformer loaded
 Generating 15 unique blog titles for: Mauritius.mimusjobs.com: Your gateway to top jobs in Mauritius. Explore vacancies in tourism, finance, IT, and more from leading employers. Post resumes, apply easily, and advance your career on the island.
 Raw title output:
-How to find jobs in Mauritius: the fastest, best and most attractive way
-ERROR: only one element tensors can be converted to Python scalars
-FAILED
+Mauritius.mimusjobs.com  Mauritius: Job hunting in Mauritius
+Final 0 Unique Titles:
+
+Starting article generation loop...
+articles.json saved with 0 articles
+progress.json set to 100%
+All articles generated successfully!
+SUCCESS
 Generation complete.

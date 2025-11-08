@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       site_url:
-        required: true
+        required: false
       wp_user:
-        required: true
+        required: false
       wp_pass:
-        required: true
+        required: false
       topics:
-        required: true
+        required: false
       site_description:
         required: false
         default: 'a general blog'

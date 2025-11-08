@@ -1,115 +1,23 @@
 Starting AI post generation...
-AI Generation Started – Flan-T5-Large + MiniLM (CPU)
-Site: 
-Description: a general blog
-Topics (15): ['General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips']
+AI Blog Generator Started – Flan-T5-Large + MiniLM (CPU)
+Site Description (hardcoded): Mauritius.mimusjobs.com: Your gateway to top jobs in Mauritius. Explore vacancies in tourism, finance, IT, and more from leading employers. Post resumes, apply easily, and advance your career on the island.
 Loading google/flan-t5-large ...
 Flan-T5-Large loaded on CPU
-Loading all-MiniLM-L6-v2 for similarity...
+Loading all-MiniLM-L6-v2 for title uniqueness...
 SentenceTransformer loaded
-Starting generation loop...
-Generating: General Tips
-Done: General Tips (57 words)
-Generating: General Tips
-Done: General Tips (210 words)
-Similarity to previous: 0.250
-Generating: General Tips
-Done: General Tips (70 words)
-Similarity to previous: 0.169
-Generating: General Tips
-Done: General Tips (374 words)
-Similarity to previous: 0.157
-Generating: General Tips
-Done: General Tips (161 words)
-Similarity to previous: 0.337
-Generating: General Tips
-Done: General Tips (312 words)
-Similarity to previous: 0.380
-Generating: General Tips
-Done: General Tips (174 words)
-Similarity to previous: 0.360
-Generating: General Tips
-Done: General Tips (9 words)
-Similarity to previous: 0.424
-Generating: General Tips
-Done: General Tips (36 words)
-Similarity to previous: 0.305
-Generating: General Tips
-Done: General Tips (121 words)
-Similarity to previous: 0.237
-Generating: General Tips
-Done: General Tips (211 words)
-Similarity to previous: 0.490
-Generating: General Tips
-Done: General Tips (72 words)
-Similarity to previous: 0.361
-Generating: General Tips
-Done: General Tips (38 words)
-Similarity to previous: 0.315
-Generating: General Tips
-Done: General Tips (74 words)
-Similarity to previous: 0.185
-Generating: General Tips
-Done: General Tips (153 words)
-Similarity to previous: 0.420
-articles.json saved
-progress.json set to 100%
-All 15 AI posts generated!
-AI Generation Started – Flan-T5-Large + MiniLM (CPU)
-Site: 
-Description: a general blog
-Topics (15): ['General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips', 'General Tips']
+Generating 15 unique blog titles for: Mauritius.mimusjobs.com: Your gateway to top jobs in Mauritius. Explore vacancies in tourism, finance, IT, and more from leading employers. Post resumes, apply easily, and advance your career on the island.
+Raw title output:
+How to find jobs in Mauritius: the fastest, best and most attractive way
+ERROR: only one element tensors can be converted to Python scalars
+AI Blog Generator Started – Flan-T5-Large + MiniLM (CPU)
+Site Description (hardcoded): Mauritius.mimusjobs.com: Your gateway to top jobs in Mauritius. Explore vacancies in tourism, finance, IT, and more from leading employers. Post resumes, apply easily, and advance your career on the island.
 Loading google/flan-t5-large ...
 Flan-T5-Large loaded on CPU
-Loading all-MiniLM-L6-v2 for similarity...
+Loading all-MiniLM-L6-v2 for title uniqueness...
 SentenceTransformer loaded
-Starting generation loop...
-Generating: General Tips
-Done: General Tips (57 words)
-Generating: General Tips
-Done: General Tips (210 words)
-Similarity to previous: 0.250
-Generating: General Tips
-Done: General Tips (70 words)
-Similarity to previous: 0.169
-Generating: General Tips
-Done: General Tips (374 words)
-Similarity to previous: 0.157
-Generating: General Tips
-Done: General Tips (161 words)
-Similarity to previous: 0.337
-Generating: General Tips
-Done: General Tips (312 words)
-Similarity to previous: 0.380
-Generating: General Tips
-Done: General Tips (174 words)
-Similarity to previous: 0.360
-Generating: General Tips
-Done: General Tips (9 words)
-Similarity to previous: 0.424
-Generating: General Tips
-Done: General Tips (36 words)
-Similarity to previous: 0.305
-Generating: General Tips
-Done: General Tips (121 words)
-Similarity to previous: 0.237
-Generating: General Tips
-Done: General Tips (211 words)
-Similarity to previous: 0.490
-Generating: General Tips
-Done: General Tips (72 words)
-Similarity to previous: 0.361
-Generating: General Tips
-Done: General Tips (38 words)
-Similarity to previous: 0.315
-Generating: General Tips
-Done: General Tips (74 words)
-Similarity to previous: 0.185
-Generating: General Tips
-Done: General Tips (153 words)
-Similarity to previous: 0.420
-articles.json saved
-progress.json set to 100%
-All 15 AI posts generated!
-SUCCESS
+Generating 15 unique blog titles for: Mauritius.mimusjobs.com: Your gateway to top jobs in Mauritius. Explore vacancies in tourism, finance, IT, and more from leading employers. Post resumes, apply easily, and advance your career on the island.
+Raw title output:
+How to find jobs in Mauritius: the fastest, best and most attractive way
+ERROR: only one element tensors can be converted to Python scalars
+FAILED
 Generation complete.

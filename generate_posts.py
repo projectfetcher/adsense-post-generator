@@ -4,9 +4,13 @@ import json
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from sentence_transformers import SentenceTransformer
+from sentence_transformers.util import cos_sim
+import random
 
-# ---------- LOGGING ----------
+# ---------- CONFIG ----------
 log_file = "logs.txt"
+progress_file = "progress.json"
+articles_file = "articles.json"
 log_handle = open(log_file, "a", encoding="utf-8")
 
 def log(msg):
@@ -14,26 +18,17 @@ def log(msg):
     log_handle.write(msg + "\n")
     log_handle.flush()
 
-log("AI Generation Started – Flan-T5-Large + MiniLM (CPU)")
+log("AI Blog Generator Started – Flan-T5-Large + MiniLM (CPU)")
 
-# ---------- INPUT ----------
-site_url   = os.getenv("SITE_URL", "")
-topics_str = os.getenv("TOPICS", "")
-site_desc  = os.getenv("SITE_DESC", "a general blog")
+# ---------- HARDCODED SITE DESCRIPTION ----------
+site_desc = "Mauritius.mimusjobs.com: Your gateway to top jobs in Mauritius. Explore vacancies in tourism, finance, IT, and more from leading employers. Post resumes, apply easily, and advance your career on the island."
 
-topics = [t.strip() for t in topics_str.split(",") if t.strip()][:15]
-if len(topics) < 15:
-    topics += ["General Tips"] * (15 - len(topics))
-
-log(f"Site: {site_url}")
-log(f"Description: {site_desc}")
-log(f"Topics ({len(topics)}): {topics}")
+log(f"Site Description (hardcoded): {site_desc}")
 
 # ---------- MODEL & TOKENIZER ----------
 log("Loading google/flan-t5-large ...")
-device = torch.device("cpu")  # Always CPU
+device = torch.device("cpu")
 model_name = "google/flan-t5-large"
-
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 model.eval()
@@ -41,81 +36,151 @@ model.to(device)
 log("Flan-T5-Large loaded on CPU")
 
 # ---------- SENTENCE TRANSFORMER ----------
-log("Loading all-MiniLM-L6-v2 for similarity...")
+log("Loading all-MiniLM-L6-v2 for title uniqueness...")
 similarity_model = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
 log("SentenceTransformer loaded")
 
-# ---------- GENERATION ----------
-def generate_article(title: str) -> str:
-    log(f"Generating: {title}")
+# ---------- TITLE GENERATION ----------
+def generate_unique_titles(site_desc: str, num_titles: int = 15):
+    log(f"Generating {num_titles} unique blog titles for: {site_desc}")
     prompt = (
-        f"Write a detailed blog post (400-600 words) about \"{title}\" "
-        f"for {site_desc}. Include an intro, 3-5 practical tips, "
-        f"real-world examples, and a conclusion. Use a friendly tone."
+        f"Generate {num_titles} diverse, engaging, and unique blog post titles "
+        f"for a website described as '{site_desc}'. "
+        f"Each title should be 6-12 words, SEO-friendly, and cover different angles. "
+        f"Return only a numbered list. No duplicates. No explanations."
     )
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512).to(device)
-
     with torch.no_grad():
         output = model.generate(
             **inputs,
-            max_new_tokens=600,
-            temperature=0.7,
+            max_new_tokens=500,
+            temperature=0.9,
             do_sample=True,
-            top_p=0.9,
-            repetition_penalty=1.1
+            top_p=0.95,
+            repetition_penalty=1.2
         )
+    raw = tokenizer.decode(output[0], skip_special_tokens=True).strip()
+    log(f"Raw title output:\n{raw}")
 
+    # Parse titles
+    titles = []
+    for line in raw.split('\n'):
+        line = line.strip()
+        if line and any(c.isalnum() for c in line):
+            clean = line.split('.', 1)[-1].split(':', 1)[-1].strip(' "\'-')
+            if 6 <= len(clean.split()) <= 14:
+                titles.append(clean)
+
+    # Deduplicate using embeddings
+    unique_titles = []
+    embeddings = []
+    for title in titles:
+        if len(unique_titles) >= num_titles:
+            break
+        emb = similarity_model.encode(title, convert_to_tensor=True)
+        if not unique_titles:
+            unique_titles.append(title)
+            embeddings.append(emb)
+            continue
+        sims = cos_sim(emb, embeddings).cpu().numpy().flatten()
+        if not any(s > 0.85 for s in sims):
+            unique_titles.append(title)
+            embeddings.append(emb)
+
+    # Fill remaining with variations
+    while len(unique_titles) < num_titles and unique_titles:
+        base = random.choice(unique_titles)
+        variation_prompt = (
+            f"Create a fresh, unique blog title variation of: \"{base}\". "
+            f"Keep same topic area for '{site_desc}' but change wording completely. "
+            f"6-12 words. No quotes."
+        )
+        inputs = tokenizer(variation_prompt, return_tensors="pt").to(device)
+        with torch.no_grad():
+            out = model.generate(**inputs, max_new_tokens=50, temperature=1.0, do_sample=True)
+        new_title = tokenizer.decode(out[0], skip_special_tokens=True).strip()
+        if 6 <= len(new_title.split()) <= 14:
+            emb = similarity_model.encode(new_title, convert_to_tensor=True)
+            sims = cos_sim(emb, embeddings).cpu().numpy().flatten()
+            if not any(s > 0.85 for s in sims):
+                unique_titles.append(new_title)
+                embeddings.append(emb)
+
+    return unique_titles[:num_titles]
+
+# ---------- ARTICLE GENERATION ----------
+def generate_article(title: str) -> str:
+    log(f"Generating article: {title}")
+    prompt = (
+        f"Write a helpful, detailed blog post titled \"{title}\" "
+        f"for a site about {site_desc}. "
+        f"Include: introduction, 3–5 practical tips with examples, "
+        f"real-world scenario, and a strong conclusion. "
+        f"Use friendly, expert tone. Minimum 400 words. Natural paragraphs."
+    )
+    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512).to(device)
+    with torch.no_grad():
+        output = model.generate(
+            **inputs,
+            max_new_tokens=800,
+            temperature=0.8,
+            do_sample=True,
+            top_p=0.92,
+            repetition_penalty=1.15,
+            min_length=300
+        )
     article = tokenizer.decode(output[0], skip_special_tokens=True).strip()
+
     word_count = len(article.split())
-    log(f"Done: {title} ({word_count} words)")
+    if word_count < 100:
+        log(f"Warning: Article too short ({word_count} words). Regenerating...")
+        return generate_article(title)
 
-    # Optional: Use similarity to deduplicate (skip if too similar to previous)
-    if articles:
-        prev = articles[-1]["content"]
-        emb1 = similarity_model.encode(prev, convert_to_tensor=True)
-        emb2 = similarity_model.encode(article, convert_to_tensor=True)
-        sim = torch.cosine_similarity(emb1, emb2, dim=0).item()
-        log(f"Similarity to previous: {sim:.3f}")
-        if sim > 0.85:
-            log("Too similar – regenerating...")
-            return generate_article(title)  # retry
-
+    log(f"Generated: {title} ({word_count} words)")
     return article
 
-# ---------- LOOP ----------
-articles = []
-progress = {"total": len(topics), "done": 0, "current": "", "percent": 0}
+# ---------- MAIN LOOP ----------
+try:
+    # Generate unique titles
+    topics = generate_unique_titles(site_desc, num_titles=15)
+    log(f"Final {len(topics)} Unique Titles:\n" + "\n".join([f"- {t}" for t in topics]))
 
-log("Starting generation loop...")
+    articles = []
+    progress = {"total": len(topics), "done": 0, "current": "", "percent": 0}
+    
+    log("Starting article generation loop...")
+    for i, title in enumerate(topics, 1):
+        progress["current"] = title
+        progress["done"] = i - 1
+        progress["percent"] = int((i - 1) / len(topics) * 100)
+        with open(progress_file, "w", encoding="utf-8") as f:
+            json.dump(progress, f, ensure_ascii=False, indent=2)
 
-for i, title in enumerate(topics, 1):
-    # Update progress
-    progress["current"] = title
-    progress["done"] = i - 1
-    progress["percent"] = int((i - 1) / len(topics) * 100)
-    with open("progress.json", "w", encoding="utf-8") as f:
-        json.dump(progress, f, ensure_ascii=False)
+        content = generate_article(title)
+        articles.append({"title": title, "content": content})
 
-    # Generate
-    content = generate_article(title)
-    articles.append({"title": title, "content": content})
+        # Update progress
+        progress["done"] = i
+        progress["percent"] = int(i / len(topics) * 100)
+        with open(progress_file, "w", encoding="utf-8") as f:
+            json.dump(progress, f, ensure_ascii=False, indents=2)
 
-    # Final progress
-    progress["done"] = i
-    progress["percent"] = int(i / len(topics) * 100)
-    with open("progress.json", "w", encoding="utf-8") as f:
-        json.dump(progress, f, ensure_ascii=False)
+    # ---------- SAVE ----------
+    with open(articles_file, "w", encoding="utf-8") as f:
+        json.dump(articles, f, indent=2, ensure_ascii=False)
+    log(f"{articles_file} saved with {len(articles)} articles")
 
-# ---------- SAVE ----------
-with open("articles.json", "w", encoding="utf-8") as f:
-    json.dump(articles, f, indent=2, ensure_ascii=False)
-log("articles.json saved")
+    progress["percent"] = 100
+    progress["current"] = "Complete"
+    with open(progress_file, "w", encoding="utf-8") as f:
+        json.dump(progress, f, ensure_ascii=False, indent=2)
+    log("progress.json set to 100%")
 
-progress["percent"] = 100
-with open("progress.json", "w", encoding="utf-8") as f:
-    json.dump(progress, f, ensure_ascii=False)
-log("progress.json set to 100%")
+    log("All articles generated successfully!")
+    print("SUCCESS")
 
-log("All 15 AI posts generated!")
-log_handle.close()
-print("SUCCESS")
+except Exception as e:
+    log(f"ERROR: {str(e)}")
+    print("FAILED")
+finally:
+    log_handle.close()

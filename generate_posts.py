@@ -6,6 +6,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from sentence_transformers import SentenceTransformer, util
 import random
 from datetime import datetime
+import traceback
 
 # ---------- CONFIG ----------
 log_file = "logs.txt"
@@ -17,8 +18,11 @@ def log(msg):
     timestamp = datetime.now().strftime("%H:%M:%S")
     full_msg = f"[{timestamp}] {msg}"
     print(full_msg)
-    log_handle.write(full_msg + "\n")
-    log_handle.flush()
+    try:
+        log_handle.write(full_msg + "\n")
+        log_handle.flush()
+    except Exception:
+        pass
 
 log("AI Blog Generator Started – Using Mistral-7B-Instruct via GitHub Models (4-bit)")
 
@@ -31,44 +35,93 @@ site_desc = (
 )
 log(f"Site Description: {site_desc}")
 
-# ---------- MISTRAL 7B via GitHub Models (4-bit) ----------
-log("Loading mistralai/Mistral-7B-Instruct-v0.2 (4-bit quantized) via GitHub Models...")
+# ---------- DEVICE / QUANTIZATION CONFIG ----------
+use_cuda = torch.cuda.is_available()
+if use_cuda:
+    log("CUDA detected: will attempt GPU-backed loading.")
+    bnb_compute_dtype = torch.float16
+    model_dtype = torch.float16
+    device_map = "auto"
+else:
+    log("No CUDA detected: using CPU-safe settings.")
+    # On CPU, float16 compute is often unsupported; use float32 for compute dtypes
+    bnb_compute_dtype = torch.float32
+    model_dtype = torch.float32
+    # device_map of 'cpu' works; some quantized loads prefer "cpu"
+    device_map = "cpu"
 
 quantization_config = BitsAndBytesConfig(
     load_in_4bit=True,
-    bnb_4bit_compute_dtype=torch.float16,
+    bnb_4bit_compute_dtype=bnb_compute_dtype,
     bnb_4bit_use_double_quant=True,
     bnb_4bit_quant_type="nf4"
 )
 
 model_id = "mistralai/Mistral-7B-Instruct-v0.2"
+log(f"Model ID: {model_id}")
 
-tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
-tokenizer.pad_token = tokenizer.eos_token
+# ---------- TOKENIZER & MODEL LOAD ----------
+try:
+    log("Loading tokenizer (trust_remote_code=True)...")
+    tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+    # ensure pad token exists
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    log("Tokenizer loaded.")
+except Exception as e:
+    log(f"Failed to load tokenizer: {e}")
+    log(traceback.format_exc())
+    raise
 
-model = AutoModelForCausalLM.from_pretrained(
-    model_id,
-    device_map="cpu",
-    torch_dtype=torch.float16,
-    quantization_config=quantization_config,
-    trust_remote_code=True
-)
-model.eval()
-log("Mistral-7B-Instruct loaded in 4-bit on CPU")
+try:
+    log("Loading model with quantization config...")
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id,
+        device_map=device_map,
+        torch_dtype=model_dtype,
+        quantization_config=quantization_config,
+        trust_remote_code=True
+    )
+    model.eval()
+    log(f"Mistral model loaded (device_map={device_map}, dtype={model_dtype}).")
+except Exception as e:
+    # Provide helpful fallback message and re-raise
+    log(f"Model load failed: {e}")
+    log(traceback.format_exc())
+    raise
 
 # ---------- SENTENCE TRANSFORMER ----------
-log("Loading all-MiniLM-L6-v2 for semantic deduplication...")
-similarity_model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
-log("SentenceTransformer ready")
+try:
+    st_device = "cuda" if use_cuda else "cpu"
+    log(f"Loading SentenceTransformer on {st_device} for semantic deduplication...")
+    similarity_model = SentenceTransformer("all-MiniLM-L6-v2", device=st_device)
+    log("SentenceTransformer ready")
+except Exception as e:
+    log(f"Failed to load SentenceTransformer: {e}")
+    log(traceback.format_exc())
+    raise
 
 # ---------- PROMPT HELPERS ----------
 def mistral_chat_prompt(messages):
-    return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    """
+    Use the tokenizer-provided chat template helper if available.
+    Fallback: join roles/content manually.
+    """
+    try:
+        return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    except Exception:
+        # fallback formatting: simple concatenation
+        parts = []
+        for m in messages:
+            role = m.get("role", "user")
+            parts.append(f"[{role.upper()}]\n{m.get('content','')}\n")
+        # Many instruction-following Mistral adapters expect an instruction wrapper; keep it simple
+        return "\n".join(parts)
 
 # ---------- TITLE GENERATION ----------
 def generate_unique_titles(site_desc: str, num_titles: int = 15):
     log(f"Generating {num_titles} SEO-optimized blog titles using Mistral-7B...")
-    
+
     system_msg = "You are a professional SEO blog editor for a Mauritius job portal. Generate diverse, clickable, 7–11 word titles."
     user_msg = (
         f"Generate {num_titles} unique, engaging blog post titles for:\n\"{site_desc}\"\n\n"
@@ -79,14 +132,17 @@ def generate_unique_titles(site_desc: str, num_titles: int = 15):
         f"- Cover: CV tips, interviews, remote work, expat jobs, industry trends\n"
         f"- Return ONLY a numbered list. No explanations."
     )
-    
+
     prompt = mistral_chat_prompt([
         {"role": "system", "content": system_msg},
         {"role": "user", "content": user_msg}
     ])
 
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1024)
-    
+    # Move inputs to appropriate device if model on GPU
+    if use_cuda:
+        inputs = {k: v.cuda() for k, v in inputs.items()}
+
     with torch.no_grad():
         output = model.generate(
             **inputs,
@@ -97,19 +153,30 @@ def generate_unique_titles(site_desc: str, num_titles: int = 15):
             repetition_penalty=1.25,
             pad_token_id=tokenizer.eos_token_id
         )
-    
-    raw = tokenizer.decode(output[0], skip_special_tokens=True).split("[/INST]")[-1].strip()
+
+    raw = tokenizer.decode(output[0], skip_special_tokens=True)
+    # Some model wrappers include special markers; attempt to clean
+    if "[/INST]" in raw:
+        raw = raw.split("[/INST]")[-1].strip()
     log(f"Raw Mistral Output:\n{raw}\n")
 
-    # Parse titles
+    # Parse titles: accept numbered lines "1. Title"
     titles = []
-    for line in raw.split("\n"):
+    for line in raw.splitlines():
         line = line.strip()
-        if not line or not line[0].isdigit(): 
+        if not line:
             continue
-        clean = line.split(". ", 1)[-1].split(": ", 1)[-1].strip(' "\'-')
+        # accept "1." or "1)"
+        if line[0].isdigit():
+            # remove leading numbering token like "1.", "1)", "1 -"
+            parts = line.split(".", 1) if "." in line else line.split(")", 1)
+            clean = parts[-1].strip()
+        else:
+            # if not numbered but looks like a title, keep as fallback
+            clean = line
+        clean = clean.strip(' "\'–-')
         words = clean.split()
-        if 7 <= len(words) <= 11 and clean[0].isupper():
+        if 7 <= len(words) <= 11 and clean and clean[0].isupper():
             titles.append(clean)
 
     log(f"Extracted {len(titles)} raw candidates")
@@ -120,7 +187,10 @@ def generate_unique_titles(site_desc: str, num_titles: int = 15):
     for title in titles:
         if len(unique_titles) >= num_titles:
             break
-        emb = similarity_model.encode(title, convert_to_tensor=True)
+        try:
+            emb = similarity_model.encode(title, convert_to_tensor=True)
+        except Exception:
+            emb = similarity_model.encode(title)
         if not embeddings:
             unique_titles.append(title)
             embeddings.append(emb)
@@ -132,20 +202,30 @@ def generate_unique_titles(site_desc: str, num_titles: int = 15):
             embeddings.append(emb)
             log(f"Title {len(unique_titles)}: {title}")
 
-    # Fill with AI variations
-    while len(unique_titles) < num_titles and unique_titles:
+    # Fill with AI variations if needed
+    variation_attempts = 0
+    while len(unique_titles) < num_titles and unique_titles and variation_attempts < 25:
         base = random.choice(unique_titles)
         var_prompt = mistral_chat_prompt([
             {"role": "system", "content": "Rephrase completely but keep meaning and SEO value."},
             {"role": "user", "content": f"Rewrite this title differently:\n\"{base}\"\n7–11 words. Start with verb/question. Mauritius job focus."}
         ])
-        inputs = tokenizer(var_prompt, return_tensors="pt")
+        inputs = tokenizer(var_prompt, return_tensors="pt", truncation=True, max_length=256)
+        if use_cuda:
+            inputs = {k: v.cuda() for k, v in inputs.items()}
         with torch.no_grad():
             out = model.generate(**inputs, max_new_tokens=40, temperature=1.0, do_sample=True, top_p=0.9)
-        new_title = tokenizer.decode(out[0], skip_special_tokens=True).split("[/INST]")[-1].strip()
+        new_title = tokenizer.decode(out[0], skip_special_tokens=True)
+        if "[/INST]" in new_title:
+            new_title = new_title.split("[/INST]")[-1].strip()
+        new_title = new_title.strip(' "\'–-')
         words = new_title.split()
-        if 7 <= len(words) <= 11 and new_title[0].isupper():
-            emb = similarity_model.encode(new_title, convert_to_tensor=True)
+        variation_attempts += 1
+        if 7 <= len(words) <= 11 and new_title and new_title[0].isupper():
+            try:
+                emb = similarity_model.encode(new_title, convert_to_tensor=True)
+            except Exception:
+                emb = similarity_model.encode(new_title)
             sims = [util.cos_sim(emb, e).item() for e in embeddings]
             if not any(s > 0.88 for s in sims):
                 unique_titles.append(new_title)
@@ -159,7 +239,7 @@ def generate_unique_titles(site_desc: str, num_titles: int = 15):
 # ---------- ARTICLE GENERATION ----------
 def generate_article(title: str) -> str:
     log(f"\nGenerating full article for:\n→ {title}")
-    
+
     prompt = mistral_chat_prompt([
         {"role": "system", "content": "You are a career expert writing for Mauritius.mimusjobs.com. Write engaging, practical, 550–700 word blog posts with local examples."},
         {"role": "user", "content": (
@@ -174,7 +254,9 @@ def generate_article(title: str) -> str:
     ])
 
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1536)
-    
+    if use_cuda:
+        inputs = {k: v.cuda() for k, v in inputs.items()}
+
     for attempt in range(3):
         with torch.no_grad():
             output = model.generate(
@@ -186,9 +268,11 @@ def generate_article(title: str) -> str:
                 repetition_penalty=1.2,
                 pad_token_id=tokenizer.eos_token_id
             )
-        article = tokenizer.decode(output[0], skip_special_tokens=True).split("[/INST]")[-1].strip()
+        article = tokenizer.decode(output[0], skip_special_tokens=True)
+        if "[/INST]" in article:
+            article = article.split("[/INST]")[-1].strip()
         word_count = len(article.split())
-        
+
         if word_count >= 550:
             log(f"Article ready: {word_count} words")
             return article
@@ -245,13 +329,15 @@ try:
     print("SUCCESS: 15 High-Quality Articles Generated with Mistral-7B!")
     print(f"→ Output: {articles_file}")
     print(f"→ Logs: {log_file}")
-    print(f"→ Model: mistralai/Mistral-7B-Instruct-v0.2 (GitHub Models)")
+    print(f"→ Model: {model_id}")
     print("="*70)
 
 except Exception as e:
     log(f"ERROR: {str(e)}")
-    import traceback
     log(traceback.format_exc())
     print("FAILED")
 finally:
-    log_handle.close()
+    try:
+        log_handle.close()
+    except Exception:
+        pass

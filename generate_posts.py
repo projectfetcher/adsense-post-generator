@@ -21,12 +21,12 @@ log("AI Blog Generator Started – Flan-T5-Large + MiniLM (CPU)")
 
 # ---------- HARDCODED SITE DESCRIPTION ----------
 site_desc = (
-    "Mauritius.mimusjobs.com: Your gateway to top jobs in Mauritius. "
-    "Explore vacancies in tourism, finance, IT, and more from leading employers. "
-    "Post resumes, apply easily, and advance your career on the island."
+    "Mauritius.mimusjobs.com is a premier job portal dedicated to connecting talent with opportunities across Mauritius's thriving economy. "
+    "From IT roles in Ebene Cybercity to luxury hospitality positions in Grand Baie, the platform features thousands of verified listings in tourism, finance, tech, healthcare, and more. "
+    "Job seekers can upload resumes, build ATS-friendly profiles, and receive tailored job alerts, while employers benefit from advanced recruitment tools and company branding. "
+    "With a mobile-optimized interface, multilingual support (English, French, Kreol), and AI-powered matching, it empowers locals and expatriates alike to advance their careers in one of the Indian Ocean’s most dynamic job markets."
 )
 log(f"Site Description (hardcoded): {site_desc}")
-
 # ---------- MODEL & TOKENIZER ----------
 log("Loading google/flan-t5-large ...")
 device = torch.device("cpu")

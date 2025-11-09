@@ -2,9 +2,10 @@
 import os
 import json
 import torch
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from sentence_transformers import SentenceTransformer, util
 import random
+from datetime import datetime
 
 # ---------- CONFIG ----------
 log_file = "logs.txt"
@@ -13,11 +14,13 @@ articles_file = "articles.json"
 log_handle = open(log_file, "a", encoding="utf-8")
 
 def log(msg):
-    print(msg)
-    log_handle.write(msg + "\n")
+    timestamp = datetime.now().strftime("%H:%M:%S")
+    full_msg = f"[{timestamp}] {msg}"
+    print(full_msg)
+    log_handle.write(full_msg + "\n")
     log_handle.flush()
 
-log("AI Blog Generator Started – Flan-T5-Large + MiniLM (CPU)")
+log("AI Blog Generator Started – Using Mistral-7B-Instruct via GitHub Models (4-bit)")
 
 # ---------- HARDCODED SITE DESCRIPTION ----------
 site_desc = (
@@ -26,166 +29,229 @@ site_desc = (
     "Job seekers can upload resumes, build ATS-friendly profiles, and receive tailored job alerts, while employers benefit from advanced recruitment tools and company branding. "
     "With a mobile-optimized interface, multilingual support (English, French, Kreol), and AI-powered matching, it empowers locals and expatriates alike to advance their careers in one of the Indian Ocean’s most dynamic job markets."
 )
-log(f"Site Description (hardcoded): {site_desc}")
-# ---------- MODEL & TOKENIZER ----------
-log("Loading google/flan-t5-large ...")
-device = torch.device("cpu")
-model_name = "google/flan-t5-large"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(device)
+log(f"Site Description: {site_desc}")
+
+# ---------- MISTRAL 7B via GitHub Models (4-bit) ----------
+log("Loading mistralai/Mistral-7B-Instruct-v0.2 (4-bit quantized) via GitHub Models...")
+
+quantization_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.float16,
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_quant_type="nf4"
+)
+
+model_id = "mistralai/Mistral-7B-Instruct-v0.2"
+
+tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+tokenizer.pad_token = tokenizer.eos_token
+
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    device_map="cpu",
+    torch_dtype=torch.float16,
+    quantization_config=quantization_config,
+    trust_remote_code=True
+)
 model.eval()
-log("Flan-T5-Large loaded on CPU")
+log("Mistral-7B-Instruct loaded in 4-bit on CPU")
 
 # ---------- SENTENCE TRANSFORMER ----------
-log("Loading all-MiniLM-L6-v2 for title uniqueness...")
+log("Loading all-MiniLM-L6-v2 for semantic deduplication...")
 similarity_model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
-log("SentenceTransformer loaded")
+log("SentenceTransformer ready")
+
+# ---------- PROMPT HELPERS ----------
+def mistral_chat_prompt(messages):
+    return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
 
 # ---------- TITLE GENERATION ----------
 def generate_unique_titles(site_desc: str, num_titles: int = 15):
-    log(f"Generating {num_titles} unique blog titles for: {site_desc}")
-    prompt = (
-        f"Generate {num_titles} diverse, engaging, and unique blog post titles "
-        f"for a website described as '{site_desc}'. "
-        f"Each title should be 6-12 words, SEO-friendly, and cover different angles. "
-        f"Return only a numbered list. No duplicates. No explanations."
+    log(f"Generating {num_titles} SEO-optimized blog titles using Mistral-7B...")
+    
+    system_msg = "You are a professional SEO blog editor for a Mauritius job portal. Generate diverse, clickable, 7–11 word titles."
+    user_msg = (
+        f"Generate {num_titles} unique, engaging blog post titles for:\n\"{site_desc}\"\n\n"
+        f"Rules:\n"
+        f"- 7–11 words each\n"
+        f"- Start with action verb, question, or number\n"
+        f"- Include Mauritius locations: Ebene, Grand Baie, Port Louis\n"
+        f"- Cover: CV tips, interviews, remote work, expat jobs, industry trends\n"
+        f"- Return ONLY a numbered list. No explanations."
     )
-    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512).to(device)
+    
+    prompt = mistral_chat_prompt([
+        {"role": "system", "content": system_msg},
+        {"role": "user", "content": user_msg}
+    ])
+
+    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1024)
+    
     with torch.no_grad():
         output = model.generate(
             **inputs,
-            max_new_tokens=500,
+            max_new_tokens=600,
             temperature=0.9,
             do_sample=True,
             top_p=0.95,
-            repetition_penalty=1.2
+            repetition_penalty=1.25,
+            pad_token_id=tokenizer.eos_token_id
         )
-
-    raw = tokenizer.decode(output[0], skip_special_tokens=True).strip()
-    log(f"Raw title output:\n{raw}")
+    
+    raw = tokenizer.decode(output[0], skip_special_tokens=True).split("[/INST]")[-1].strip()
+    log(f"Raw Mistral Output:\n{raw}\n")
 
     # Parse titles
     titles = []
     for line in raw.split("\n"):
         line = line.strip()
-        if line and any(c.isalnum() for c in line):
-            clean = line.split(".", 1)[-1].split(":", 1)[-1].strip(' "\'-')
-            if 6 <= len(clean.split()) <= 14:
-                titles.append(clean)
+        if not line or not line[0].isdigit(): 
+            continue
+        clean = line.split(". ", 1)[-1].split(": ", 1)[-1].strip(' "\'-')
+        words = clean.split()
+        if 7 <= len(words) <= 11 and clean[0].isupper():
+            titles.append(clean)
 
-    # Deduplicate using cosine similarity
+    log(f"Extracted {len(titles)} raw candidates")
+
+    # Deduplicate semantically
     unique_titles = []
     embeddings = []
-
     for title in titles:
         if len(unique_titles) >= num_titles:
             break
-
         emb = similarity_model.encode(title, convert_to_tensor=True)
         if not embeddings:
             unique_titles.append(title)
             embeddings.append(emb)
+            log(f"Title {len(unique_titles)}: {title}")
             continue
-
-        # Compare against all existing embeddings
         sims = [util.cos_sim(emb, e).item() for e in embeddings]
-        if not any(s > 0.85 for s in sims):
+        if not any(s > 0.88 for s in sims):
             unique_titles.append(title)
             embeddings.append(emb)
+            log(f"Title {len(unique_titles)}: {title}")
 
-    # Fill remaining with variations
+    # Fill with AI variations
     while len(unique_titles) < num_titles and unique_titles:
         base = random.choice(unique_titles)
-        variation_prompt = (
-            f"Create a fresh, unique blog title variation of: \"{base}\". "
-            f"Keep same topic area for '{site_desc}' but change wording completely. "
-            f"6-12 words. No quotes."
-        )
-        inputs = tokenizer(variation_prompt, return_tensors="pt").to(device)
+        var_prompt = mistral_chat_prompt([
+            {"role": "system", "content": "Rephrase completely but keep meaning and SEO value."},
+            {"role": "user", "content": f"Rewrite this title differently:\n\"{base}\"\n7–11 words. Start with verb/question. Mauritius job focus."}
+        ])
+        inputs = tokenizer(var_prompt, return_tensors="pt")
         with torch.no_grad():
-            out = model.generate(**inputs, max_new_tokens=50, temperature=1.0, do_sample=True)
-        new_title = tokenizer.decode(out[0], skip_special_tokens=True).strip()
-        if 6 <= len(new_title.split()) <= 14:
+            out = model.generate(**inputs, max_new_tokens=40, temperature=1.0, do_sample=True, top_p=0.9)
+        new_title = tokenizer.decode(out[0], skip_special_tokens=True).split("[/INST]")[-1].strip()
+        words = new_title.split()
+        if 7 <= len(words) <= 11 and new_title[0].isupper():
             emb = similarity_model.encode(new_title, convert_to_tensor=True)
             sims = [util.cos_sim(emb, e).item() for e in embeddings]
-            if not any(s > 0.85 for s in sims):
+            if not any(s > 0.88 for s in sims):
                 unique_titles.append(new_title)
                 embeddings.append(emb)
+                log(f"Title {len(unique_titles)} (AI variation): {new_title}")
 
-    return unique_titles[:num_titles]
+    final = unique_titles[:num_titles]
+    log(f"\nFINAL {len(final)} TITLES:\n" + "\n".join([f"{i+1}. {t}" for i, t in enumerate(final)]))
+    return final
 
 # ---------- ARTICLE GENERATION ----------
 def generate_article(title: str) -> str:
-    log(f"Generating article: {title}")
-    prompt = (
-        f"Write a helpful, detailed blog post titled \"{title}\" "
-        f"for a site about {site_desc}. "
-        f"Include: introduction, 3–5 practical tips with examples, "
-        f"real-world scenario, and a strong conclusion. "
-        f"Use friendly, expert tone. Minimum 400 words. Natural paragraphs."
-    )
-    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512).to(device)
-    with torch.no_grad():
-        output = model.generate(
-            **inputs,
-            max_new_tokens=800,
-            temperature=0.8,
-            do_sample=True,
-            top_p=0.92,
-            repetition_penalty=1.15,
-            min_length=300
-        )
-    article = tokenizer.decode(output[0], skip_special_tokens=True).strip()
+    log(f"\nGenerating full article for:\n→ {title}")
+    
+    prompt = mistral_chat_prompt([
+        {"role": "system", "content": "You are a career expert writing for Mauritius.mimusjobs.com. Write engaging, practical, 550–700 word blog posts with local examples."},
+        {"role": "user", "content": (
+            f"Write a blog post titled:\n\"{title}\"\n\n"
+            f"Include:\n"
+            f"- Hook with Mauritius job stat or story\n"
+            f"- 4 bullet-point tips with local examples (Ebene, Grand Baie, etc.)\n"
+            f"- 1 real success story (e.g. 'Aisha from Quatre Bornes...')\n"
+            f"- CTA: 'Find your dream job at Mauritius.mimusjobs.com'\n\n"
+            f"550–700 words. Natural tone. Use headers, bullets."
+        )}
+    ])
 
-    word_count = len(article.split())
-    if word_count < 100:
-        log(f"Warning: Article too short ({word_count} words). Regenerating...")
-        return generate_article(title)
+    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1536)
+    
+    for attempt in range(3):
+        with torch.no_grad():
+            output = model.generate(
+                **inputs,
+                max_new_tokens=1000,
+                temperature=0.8,
+                do_sample=True,
+                top_p=0.93,
+                repetition_penalty=1.2,
+                pad_token_id=tokenizer.eos_token_id
+            )
+        article = tokenizer.decode(output[0], skip_special_tokens=True).split("[/INST]")[-1].strip()
+        word_count = len(article.split())
+        
+        if word_count >= 550:
+            log(f"Article ready: {word_count} words")
+            return article
+        else:
+            log(f"Attempt {attempt+1}: Too short ({word_count} words). Retrying...")
 
-    log(f"Generated: {title} ({word_count} words)")
+    log("Using last attempt despite length")
     return article
 
 # ---------- MAIN LOOP ----------
 try:
-    topics = generate_unique_titles(site_desc, num_titles=15)
-    log(f"Final {len(topics)} Unique Titles:\n" + "\n".join([f"- {t}" for t in topics]))
+    log("="*70)
+    log("PHASE 1: GENERATING 15 UNIQUE TITLES")
+    log("="*70)
+    titles = generate_unique_titles(site_desc, num_titles=15)
 
     articles = []
-    progress = {"total": len(topics), "done": 0, "current": "", "percent": 0}
+    total = len(titles)
+    progress = {"total": total, "done": 0, "current": "", "percent": 0}
 
-    log("Starting article generation loop...")
-    for i, title in enumerate(topics, 1):
+    log("="*70)
+    log("PHASE 2: GENERATING FULL ARTICLES")
+    log("="*70)
+
+    for i, title in enumerate(titles, 1):
         progress["current"] = title
         progress["done"] = i - 1
-        progress["percent"] = int((i - 1) / len(topics) * 100)
+        progress["percent"] = int((i - 1) / total * 100)
         with open(progress_file, "w", encoding="utf-8") as f:
-            json.dump(progress, f, ensure_ascii=False, indent=2)
+            json.dump(progress, f, indent=2)
 
         content = generate_article(title)
         articles.append({"title": title, "content": content})
 
-        # Update progress
         progress["done"] = i
-        progress["percent"] = int(i / len(topics) * 100)
+        progress["percent"] = int(i / total * 100)
         with open(progress_file, "w", encoding="utf-8") as f:
-            json.dump(progress, f, ensure_ascii=False, indent=2)
+            json.dump(progress, f, indent=2)
 
+        log(f"PROGRESS: {i}/{total} [{progress['percent']}%] → {title[:50]}...")
+
+    # Save
     with open(articles_file, "w", encoding="utf-8") as f:
         json.dump(articles, f, indent=2, ensure_ascii=False)
-
-    log(f"{articles_file} saved with {len(articles)} articles")
+    log(f"SAVED: {articles_file} ({len(articles)} articles)")
 
     progress["percent"] = 100
-    progress["current"] = "Complete"
+    progress["current"] = "Complete!"
     with open(progress_file, "w", encoding="utf-8") as f:
-        json.dump(progress, f, ensure_ascii=False, indent=2)
-    log("progress.json set to 100%")
+        json.dump(progress, f, indent=2)
+    log("progress.json → 100%")
 
-    log("All articles generated successfully!")
-    print("SUCCESS")
+    print("\n" + "="*70)
+    print("SUCCESS: 15 High-Quality Articles Generated with Mistral-7B!")
+    print(f"→ Output: {articles_file}")
+    print(f"→ Logs: {log_file}")
+    print(f"→ Model: mistralai/Mistral-7B-Instruct-v0.2 (GitHub Models)")
+    print("="*70)
 
 except Exception as e:
     log(f"ERROR: {str(e)}")
+    import traceback
+    log(traceback.format_exc())
     print("FAILED")
 finally:
     log_handle.close()

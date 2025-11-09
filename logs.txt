@@ -7,11 +7,57 @@ Loading all-MiniLM-L6-v2 for title uniqueness...
 SentenceTransformer loaded
 Generating 15 unique blog titles for: Mauritius.mimusjobs.com: Your gateway to top jobs in Mauritius. Explore vacancies in tourism, finance, IT, and more from leading employers. Post resumes, apply easily, and advance your career on the island.
 Raw title output:
-Mauritius Jobs: New Hires in Mauritius | Mauritius Jobs, Mauritius Accommodation, Jobs, Accommodation | Mauritius Jobs, Mauritius Hotels
-Final 0 Unique Titles:
-
+Mauritius' top job postings - 12 categories
+Final 15 Unique Titles:
+- Mauritius' top job postings - 12 categories
+- Mauritius: Top jobs in the Caribbean's second largest country - 12 categories
+- Mauritius' top job postings to apply for jobs & post your resume (PDF)
+- Mauritius: The next wave of jobs?
+- Mauritius: The next wave of tourism?
+- Mauritius.mimusjobs.com: Guide to careers and job placement in Mauritius' second largest island.
+- Mauritius: The best way to make money quickly?
+- Career Opportunities in Mauritius - 'Neuron Express'
+- Career Opportunities in Mauritius - 'Raw Africa'
+- It's better to get a job sooner rather than later!
+- Vacancies in Mauritius from leading employers
+- Mauritius 'Most Wanted' for the 'Trending Jobs'
+- Guide to careers and jobs placement in Mauritius' second largest island.
+- Career Opportunities in Mauritius - 'Early Bird Warning.'
+- Career opportunities in Mauritius: 'Arena Express'
 Starting article generation loop...
-articles.json saved with 0 articles
+Generating article: Mauritius' top job postings - 12 categories
+Generated: Mauritius' top job postings - 12 categories (225 words)
+Generating article: Mauritius: Top jobs in the Caribbean's second largest country - 12 categories
+Generated: Mauritius: Top jobs in the Caribbean's second largest country - 12 categories (482 words)
+Generating article: Mauritius' top job postings to apply for jobs & post your resume (PDF)
+Generated: Mauritius' top job postings to apply for jobs & post your resume (PDF) (311 words)
+Generating article: Mauritius: The next wave of jobs?
+Generated: Mauritius: The next wave of jobs? (234 words)
+Generating article: Mauritius: The next wave of tourism?
+Generated: Mauritius: The next wave of tourism? (318 words)
+Generating article: Mauritius.mimusjobs.com: Guide to careers and job placement in Mauritius' second largest island.
+Generated: Mauritius.mimusjobs.com: Guide to careers and job placement in Mauritius' second largest island. (216 words)
+Generating article: Mauritius: The best way to make money quickly?
+Generated: Mauritius: The best way to make money quickly? (313 words)
+Generating article: Career Opportunities in Mauritius - 'Neuron Express'
+Generated: Career Opportunities in Mauritius - 'Neuron Express' (324 words)
+Generating article: Career Opportunities in Mauritius - 'Raw Africa'
+Generated: Career Opportunities in Mauritius - 'Raw Africa' (240 words)
+Generating article: It's better to get a job sooner rather than later!
+Generated: It's better to get a job sooner rather than later! (230 words)
+Generating article: Vacancies in Mauritius from leading employers
+Generated: Vacancies in Mauritius from leading employers (285 words)
+Generating article: Mauritius 'Most Wanted' for the 'Trending Jobs'
+Generated: Mauritius 'Most Wanted' for the 'Trending Jobs' (328 words)
+Generating article: Guide to careers and jobs placement in Mauritius' second largest island.
+Warning: Article too short (50 words). Regenerating...
+Generating article: Guide to careers and jobs placement in Mauritius' second largest island.
+Generated: Guide to careers and jobs placement in Mauritius' second largest island. (270 words)
+Generating article: Career Opportunities in Mauritius - 'Early Bird Warning.'
+Generated: Career Opportunities in Mauritius - 'Early Bird Warning.' (239 words)
+Generating article: Career opportunities in Mauritius: 'Arena Express'
+Generated: Career opportunities in Mauritius: 'Arena Express' (461 words)
+articles.json saved with 15 articles
 progress.json set to 100%
 All articles generated successfully!
 AI Blog Generator Started – Flan-T5-Large + MiniLM (CPU)
@@ -22,11 +68,57 @@ Loading all-MiniLM-L6-v2 for title uniqueness...
 SentenceTransformer loaded
 Generating 15 unique blog titles for: Mauritius.mimusjobs.com: Your gateway to top jobs in Mauritius. Explore vacancies in tourism, finance, IT, and more from leading employers. Post resumes, apply easily, and advance your career on the island.
 Raw title output:
-Mauritius Jobs: New Hires in Mauritius | Mauritius Jobs, Mauritius Accommodation, Jobs, Accommodation | Mauritius Jobs, Mauritius Hotels
-Final 0 Unique Titles:
-
+Mauritius' top job postings - 12 categories
+Final 15 Unique Titles:
+- Mauritius' top job postings - 12 categories
+- Mauritius: Top jobs in the Caribbean's second largest country - 12 categories
+- Mauritius' top job postings to apply for jobs & post your resume (PDF)
+- Mauritius: The next wave of jobs?
+- Mauritius: The next wave of tourism?
+- Mauritius.mimusjobs.com: Guide to careers and job placement in Mauritius' second largest island.
+- Mauritius: The best way to make money quickly?
+- Career Opportunities in Mauritius - 'Neuron Express'
+- Career Opportunities in Mauritius - 'Raw Africa'
+- It's better to get a job sooner rather than later!
+- Vacancies in Mauritius from leading employers
+- Mauritius 'Most Wanted' for the 'Trending Jobs'
+- Guide to careers and jobs placement in Mauritius' second largest island.
+- Career Opportunities in Mauritius - 'Early Bird Warning.'
+- Career opportunities in Mauritius: 'Arena Express'
 Starting article generation loop...
-articles.json saved with 0 articles
+Generating article: Mauritius' top job postings - 12 categories
+Generated: Mauritius' top job postings - 12 categories (225 words)
+Generating article: Mauritius: Top jobs in the Caribbean's second largest country - 12 categories
+Generated: Mauritius: Top jobs in the Caribbean's second largest country - 12 categories (482 words)
+Generating article: Mauritius' top job postings to apply for jobs & post your resume (PDF)
+Generated: Mauritius' top job postings to apply for jobs & post your resume (PDF) (311 words)
+Generating article: Mauritius: The next wave of jobs?
+Generated: Mauritius: The next wave of jobs? (234 words)
+Generating article: Mauritius: The next wave of tourism?
+Generated: Mauritius: The next wave of tourism? (318 words)
+Generating article: Mauritius.mimusjobs.com: Guide to careers and job placement in Mauritius' second largest island.
+Generated: Mauritius.mimusjobs.com: Guide to careers and job placement in Mauritius' second largest island. (216 words)
+Generating article: Mauritius: The best way to make money quickly?
+Generated: Mauritius: The best way to make money quickly? (313 words)
+Generating article: Career Opportunities in Mauritius - 'Neuron Express'
+Generated: Career Opportunities in Mauritius - 'Neuron Express' (324 words)
+Generating article: Career Opportunities in Mauritius - 'Raw Africa'
+Generated: Career Opportunities in Mauritius - 'Raw Africa' (240 words)
+Generating article: It's better to get a job sooner rather than later!
+Generated: It's better to get a job sooner rather than later! (230 words)
+Generating article: Vacancies in Mauritius from leading employers
+Generated: Vacancies in Mauritius from leading employers (285 words)
+Generating article: Mauritius 'Most Wanted' for the 'Trending Jobs'
+Generated: Mauritius 'Most Wanted' for the 'Trending Jobs' (328 words)
+Generating article: Guide to careers and jobs placement in Mauritius' second largest island.
+Warning: Article too short (50 words). Regenerating...
+Generating article: Guide to careers and jobs placement in Mauritius' second largest island.
+Generated: Guide to careers and jobs placement in Mauritius' second largest island. (270 words)
+Generating article: Career Opportunities in Mauritius - 'Early Bird Warning.'
+Generated: Career Opportunities in Mauritius - 'Early Bird Warning.' (239 words)
+Generating article: Career opportunities in Mauritius: 'Arena Express'
+Generated: Career opportunities in Mauritius: 'Arena Express' (461 words)
+articles.json saved with 15 articles
 progress.json set to 100%
 All articles generated successfully!
 SUCCESS
